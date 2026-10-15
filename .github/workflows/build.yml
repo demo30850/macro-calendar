@@ -1,0 +1,40 @@
+name: Build calendar
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Shortly after the 8:30 a.m. ET releases (EDT and EST), and once overnight.
+    - cron: "50 12 * * 1-5"
+    - cron: "50 13 * * 1-5"
+    - cron: "15 19 * * 1-5"
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python build.py
+      - run: cp index.html public/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deploy
+        uses: actions/deploy-pages@v4
