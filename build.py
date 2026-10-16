@@ -64,7 +64,7 @@ def figures(kind, d, ym):
                 f"核心 CPI 月增 {fmt(pct(d['core_sa'], ym, 1))}、年增 {fmt(pct(d['core_nsa'], ym, 12))}")
     if kind == "PPI" and ym in d["ppi_sa"]:
         return (f"{label}：PPI 月增 {fmt(pct(d['ppi_sa'], ym, 1))}、年增 {fmt(pct(d['ppi_nsa'], ym, 12))}；"
-                f"核心 PPI 月增 {fmt(pct(d['ppicore_sa'], ym, 1))}、年增 {fmt(pct(d['ppicore_nsa'], ym, 12))}")
+                f"核心 PPI（扣除食品、能源與貿易服務）月增 {fmt(pct(d['ppicore_sa'], ym, 1))}、年增 {fmt(pct(d['ppicore_nsa'], ym, 12))}")
     if kind == "NFP" and ym in d["payrolls"] and prev_month(ym) in d["payrolls"]:
         change = (d["payrolls"][ym] - d["payrolls"][prev_month(ym)]) * 1000
         rate = d["unemployment"].get(ym)
