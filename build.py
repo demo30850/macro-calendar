@@ -8,6 +8,7 @@ import hashlib
 import json
 import pathlib
 import sys
+import time
 import urllib.request
 from zoneinfo import ZoneInfo
 
@@ -24,9 +25,18 @@ SERIES = {
 def fetch_bls():
     year = dt.date.today().year
     body = json.dumps({"seriesid": list(SERIES.values()), "startyear": str(year - 2), "endyear": str(year)}).encode()
-    req = urllib.request.Request("https://api.bls.gov/publicAPI/v1/timeseries/data/", body, {"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        data = json.load(r)
+    # The BLS API sometimes stalls (a timeout failed the 2026-10-20 run); retry before giving up.
+    for attempt in range(4):
+        try:
+            req = urllib.request.Request("https://api.bls.gov/publicAPI/v1/timeseries/data/", body, {"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                data = json.load(r)
+            break
+        except (OSError, ValueError) as error:
+            if attempt == 3:
+                raise
+            print(f"BLS API attempt {attempt + 1} failed ({error}); retrying")
+            time.sleep(15 * (attempt + 1))
     if data.get("status") != "REQUEST_SUCCEEDED":
         sys.exit(f"BLS API failed: {data.get('message')}")
     by_id = {s["seriesID"]: s["data"] for s in data["Results"]["series"]}
