@@ -6,6 +6,7 @@ consensus.json, which a scheduled task fills a few days before each release.
 import datetime as dt
 import hashlib
 import json
+import os
 import pathlib
 import sys
 import time
@@ -191,4 +192,14 @@ def build(data):
 
 
 if __name__ == "__main__":
-    print(f"built {build(fetch_bls())} events")
+    try:
+        data = fetch_bls()
+    except OSError as error:
+        # BLS itself is down (503 for hours on 2026-10-22). The calendar already published
+        # stays as it is; the workflow skips deploying instead of failing and emailing.
+        print(f"::warning::BLS API unavailable ({error}); keeping the published calendar")
+        if os.environ.get("GITHUB_OUTPUT"):
+            with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                f.write("skip=true\n")
+        sys.exit(0)
+    print(f"built {build(data)} events")
